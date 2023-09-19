@@ -617,7 +617,7 @@ app.get("/career", async (req, res) => {
 });
 
 
-router.get("/career/:id", async (req, res) => {
+app.get("/career/:id", async (req, res) => {
   try {
     const recordId = req.params.id;
     const record = await careerData.findById(recordId);
@@ -708,7 +708,7 @@ app.get("/examcalender", async (req, res) => {
 });
 
 
-router.get("/examcalender/:id", async (req, res) => {
+app.get("/examcalender/:id", async (req, res) => {
   try {
     const recordId = req.params.id;
     const record = await examData.findById(recordId);
@@ -802,7 +802,7 @@ app.get("/tender", async (req, res) => {
 });
 
 
-router.get("/tender/:id", async (req, res) => {
+app.get("/tender/:id", async (req, res) => {
   try {
     const recordId = req.params.id;
     const record = await tenderData.findById(recordId);
