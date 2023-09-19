@@ -616,6 +616,22 @@ app.get("/career", async (req, res) => {
   }
 });
 
+
+router.get("/career/:id", async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const record = await careerData.findById(recordId);
+    
+    if (!record) {
+      return res.status(404).json({ error: "Record not found." });
+    }
+
+    return res.status(200).json(record);
+  } catch (err) {
+    return res.status(500).json({ error: "Internal server error." });
+  }
+});
+
 app.delete("/career/:id", async (req, res) => {
   try {
     const dataId = req.params.id;
@@ -691,6 +707,23 @@ app.get("/examcalender", async (req, res) => {
   }
 });
 
+
+router.get("/examcalender/:id", async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const record = await examData.findById(recordId);
+    
+    if (!record) {
+      return res.status(404).json({ error: "Record not found." });
+    }
+
+    return res.status(200).json(record);
+  } catch (err) {
+    return res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+
 app.delete("/examcalender/:id", async (req, res) => {
   try {
     const dataId = req.params.id;
@@ -763,6 +796,22 @@ app.get("/tender", async (req, res) => {
   try {
     const allData = await tenderData.find();
     return res.status(200).json(allData);
+  } catch (err) {
+    return res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+
+router.get("/tender/:id", async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const record = await tenderData.findById(recordId);
+    
+    if (!record) {
+      return res.status(404).json({ error: "Record not found." });
+    }
+
+    return res.status(200).json(record);
   } catch (err) {
     return res.status(500).json({ error: "Internal server error." });
   }
