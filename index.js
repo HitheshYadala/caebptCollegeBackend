@@ -17,7 +17,7 @@ app.use(cors({ origin: "*" }));
 
 // Connect to MongoDB
 mongoose.connect(
-  "mongodb+srv://caebptbapatla:Caebptbapatla_123@caebptcluster.yla6js4.mongodb.net/?tls=true",
+  "mongodb+srv://caebptbapatla:Caebptbapatla_123@caebptcluster.yla6js4.mongodb.net/caebpt",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
