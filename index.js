@@ -17,7 +17,7 @@ app.use(cors({ origin: "*" }));
 
 // Connect to MongoDB
 mongoose.connect(
-  "mongodb+srv://jonnadularajasri:India_212801@cluster0.mmtj51m.mongodb.net/AgriculturalCollege",
+  "mongodb+srv://caebptbapatla:Caebptbapatla_123@caebptcluster.yla6js4.mongodb.net/?tls=true",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
