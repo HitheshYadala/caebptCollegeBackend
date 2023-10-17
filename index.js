@@ -854,7 +854,7 @@ const photoSchema = new mongoose.Schema({
 const photoData = mongoose.model("Photo Gallery", photoSchema);
 
 // Route to handle data upload for the Noticeboard
-app.post("/photogallery", upload.array('image', 20), async (req, res) => {
+app.post("/photogallery", upload.single('image', 20), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Please upload an image." });
