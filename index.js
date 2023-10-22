@@ -40,13 +40,14 @@ const storage = multer.diskStorage({
 });
 
 // File filter to accept only certain image formats
+const allowedFormats = [".jpg", ".jpeg", ".png", ".pdf"];
+
 const imageFilter = function (req, file, cb) {
-  const allowedFormats = [".jpg", ".jpeg", ".png"];
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowedFormats.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error("Only jpg, jpeg, and png images are allowed."));
+    cb(new Error("Only jpg, jpeg, png, and pdf files are allowed."));
   }
 };
 
@@ -61,20 +62,34 @@ const upload = multer({
 
 const processFile = (file) => {
   return new Promise(async (resolve, reject) => {
-    const readStream = fs.createReadStream(file.path);
-    const writeStream = new stream.PassThrough(); // Create a writable stream
+    const ext = path.extname(file.originalname).toLowerCase();
 
-    readStream.on('error', (err) => {
-      reject(err);
-    });
+    if (ext === '.pdf') {
+      // Handle PDF files
+      const pdfData = fs.readFileSync(file.path);
+      const base64PDF = pdfData.toString('base64');
+      resolve(base64PDF);
+    } else if (allowedFormats.includes(ext)) {
+      // Handle image files
+      const readStream = fs.createReadStream(file.path);
+      const writeStream = new stream.PassThrough();
 
-    readStream.pipe(writeStream); // Pipe the read stream to the writable stream
+      readStream.on('error', (err) => {
+        reject(err);
+      });
 
-    const image = await sharp(file.path).resize(900, 900, { fit: 'inside' }).toBuffer();
-    const base64Image = Buffer.from(image).toString('base64');
-    resolve(base64Image);
+      readStream.pipe(writeStream);
+
+      const image = await sharp(file.path).resize(900, 900, { fit: 'inside' }).toBuffer();
+      const base64Image = Buffer.from(image).toString('base64');
+      resolve(base64Image);
+    } else {
+      // Invalid format
+      reject(new Error("Only jpg, jpeg, png, and pdf files are allowed."));
+    }
   });
 };
+
 
 
 // CAROUSEL API (GET, POST, DELETE)
@@ -183,18 +198,17 @@ const noticboardSchema = new mongoose.Schema({
 const NoticeboardData = mongoose.model("Noticeboards", noticboardSchema);
 
 // Route to handle data upload for the Noticeboard
-
 app.post('/noticeboard', upload.array('images', 20), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: "Please upload at least one image." });
+      return res.status(400).json({ error: "Please upload at least one image or PDF." });
     }
 
-    // Process each uploaded image using streams
-    const imagePromises = req.files.map(processFile);
+    // Process each uploaded file using streams
+    const filePromises = req.files.map(processFile);
 
-    // Wait for all the image conversions to complete
-    const base64Images = await Promise.all(imagePromises);
+    // Wait for all the file conversions to complete
+    const base64Files = await Promise.all(filePromises);
 
     // Create a new Data document and save it to the database
     const newData = new NoticeboardData({
@@ -205,10 +219,10 @@ app.post('/noticeboard', upload.array('images', 20), async (req, res) => {
       EndDate: req.body.endDates,
       Link: req.body.links,
       IsNew: req.body.isNews,
-      Image: base64Images, // Store the array of base64 image strings in the Image field
+      Image: base64Files, // Store the array of base64 strings in the Image field
     });
 
-    await newData.save(); // Use the "await" keyword to wait for the save operation to complete
+    await newData.save();
 
     // Remove the uploaded files after saving the data to the database
     req.files.forEach((file) => {
@@ -221,6 +235,7 @@ app.post('/noticeboard', upload.array('images', 20), async (req, res) => {
     return res.status(500).json({ error: "Internal server error." });
   }
 });
+
 
 
 
@@ -583,9 +598,10 @@ app.post("/career", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "Please upload an image." });
     }
 
-    // Read the image file and convert it to base64 string
-    const imageFile = fs.readFileSync(req.file.path);
-    const base64Image = imageFile.toString("base64");
+    const filePromises = req.files.map(processFile);
+
+    // Wait for all the file conversions to complete
+    const base64Files = await Promise.all(filePromises);
 
     // Create a new Data document and save it to the database
     const newData = new careerData({
@@ -593,7 +609,7 @@ app.post("/career", upload.single("image"), async (req, res) => {
       StartDate: req.body.startDate,
       EndDate: req.body.endDate,
       Title: req.body.title,
-      Image: base64Image, // Store the base64 image string in the Image field
+      Image: base64Files, // Store the base64 image string in the Image field
     });
 
     await newData.save(); // Use the "await" keyword to wait for the save operation to complete
@@ -674,9 +690,11 @@ app.post("/examcalender", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "Please upload an image." });
     }
 
-    // Read the image file and convert it to base64 string
-    const imageFile = fs.readFileSync(req.file.path);
-    const base64Image = imageFile.toString("base64");
+        // Process each uploaded file using streams
+        const filePromises = req.files.map(processFile);
+
+        // Wait for all the file conversions to complete
+        const base64Files = await Promise.all(filePromises);
 
     // Create a new Data document and save it to the database
     const newData = new examData({
@@ -684,7 +702,7 @@ app.post("/examcalender", upload.single("image"), async (req, res) => {
       StartDate: req.body.startDate,
       EndDate: req.body.endDate,
       Title: req.body.title,
-      Image: base64Image, // Store the base64 image string in the Image field
+      Image: base64Files, // Store the base64 image string in the Image field
     });
 
     await newData.save(); // Use the "await" keyword to wait for the save operation to complete
@@ -769,8 +787,15 @@ app.post("/tender", upload.single("image"), async (req, res) => {
     }
 
     // Read the image file and convert it to base64 string
-    const imageFile = fs.readFileSync(req.file.path);
-    const base64Image = imageFile.toString("base64");
+    // const imageFile = fs.readFileSync(req.file.path);
+    // const base64Image = imageFile.toString("base64");
+
+
+    // Process each uploaded file using streams
+    const filePromises = req.files.map(processFile);
+
+    // Wait for all the file conversions to complete
+    const base64Files = await Promise.all(filePromises);
 
     // Create a new Data document and save it to the database
     const newData = new tenderData({
@@ -778,7 +803,7 @@ app.post("/tender", upload.single("image"), async (req, res) => {
       StartDate: req.body.startDate,
       EndDate: req.body.endDate,
       Title: req.body.title,
-      Image: base64Image, // Store the base64 image string in the Image field
+      Image: base64Files, // Store the base64 image string in the Image field
     });
 
     await newData.save(); // Use the "await" keyword to wait for the save operation to complete
